@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MACHINA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Helvetica Neue', sans-serif;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        .custom-cursor {
+            width: 40px;
+            height: 40px;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .custom-cursor::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 3px solid #ff0040;
+            border-radius: 50%;
+            box-shadow: 0 0 20px #ff0040, 0 0 40px #ff0040;
+        }
+
+        .custom-cursor::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff;
+        }
+
+        .title {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            pointer-events: none;
+            text-align: center;
+            mix-blend-mode: difference;
+        }
+
+        .title h1 {
+            font-size: clamp(80px, 20vw, 300px);
+            font-weight: 100;
+            letter-spacing: -0.02em;
+            line-height: 0.8;
+            opacity: 0.9;
+        }
+
+        .meta-text {
+            position: fixed;
+            writing-mode: vertical-rl;
+            font-size: 10px;
+            letter-spacing: 10px;
+            text-transform: uppercase;
+            opacity: 0.3;
+            z-index: 10;
+        }
+
+        .meta-text.left {
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .meta-text.right {
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="custom-cursor"></div>
+    
+    <div id="canvas-container"></div>
+    
+    <div class="title">
+        <h1>MACHINA</h1>
+    </div>
+
+    <div class="meta-text left">SYNTHETIC CONSCIOUSNESS</div>
+    <div class="meta-text right">DIGITAL ORGANISM</div>
+
+    <script>
+        // Custom cursor
+        const cursor = document.querySelector('.custom-cursor');
+        
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX - 20 + 'px';
+            cursor.style.top = e.clientY - 20 + 'px';
+        });
+
+        // Three.js scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: true,
+            alpha: true
+        });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Create chrome material
+        const chromeMaterial = new THREE.MeshPhongMaterial({
+            color: 0xffffff,
+            specular: 0xffffff,
+            shininess: 100,
+            reflectivity: 1
+        });
+
+        // Create mechanical being
+        const group = new THREE.Group();
+        
+        // Core - organic shape
+        const coreGeometry = new THREE.IcosahedronGeometry(2, 1);
+        const core = new THREE.Mesh(coreGeometry, chromeMaterial);
+        core.position.y = 5;
+        group.add(core);
+        
+        // Floating parts around core
+        for (let i = 0; i < 15; i++) {
+            const angle = (i / 15) * Math.PI * 2;
+            const radius = 3 + Math.random() * 2;
+            const partGeometry = new THREE.IcosahedronGeometry(0.3 + Math.random() * 0.5, 0);
+            const part = new THREE.Mesh(partGeometry, chromeMaterial);
+            part.position.x = Math.cos(angle) * radius;
+            part.position.z = Math.sin(angle) * radius;
+            part.position.y = 5 + (Math.random() - 0.5) * 2;
+            part.userData = { angle: angle, radius: radius, speed: Math.random() * 0.5 + 0.5 };
+            group.add(part);
+        }
+        
+        // Body segments
+        for (let i = 0; i < 5; i++) {
+            const segmentGeometry = new THREE.SphereGeometry(1.5 - i * 0.2, 16, 12);
+            const segment = new THREE.Mesh(segmentGeometry, chromeMaterial);
+            segment.position.y = 2 - i * 1.5;
+            segment.scale.x = 1.2;
+            segment.scale.z = 0.8;
+            group.add(segment);
+        }
+        
+        scene.add(group);
+
+        // Particles
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 1000;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for (let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 50;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.05,
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.5
+        });
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        const directionalLight1 = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight1.position.set(5, 10, 5);
+        scene.add(directionalLight1);
+
+        const directionalLight2 = new THREE.DirectionalLight(0x8888ff, 0.5);
+        directionalLight2.position.set(-5, -10, -5);
+        scene.add(directionalLight2);
+
+        const pointLight = new THREE.PointLight(0xffffff, 1);
+        pointLight.position.set(0, 0, 10);
+        scene.add(pointLight);
+
+        camera.position.z = 20;
+
+        // Mouse tracking
+        let mouseX = 0;
+        let mouseY = 0;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        // Animation
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotate main group
+            group.rotation.y += 0.003;
+            
+            // Animate floating parts
+            group.children.forEach((child, index) => {
+                if (child.userData.angle !== undefined) {
+                    const time = Date.now() * 0.001;
+                    child.position.x = Math.cos(child.userData.angle + time * child.userData.speed) * child.userData.radius;
+                    child.position.z = Math.sin(child.userData.angle + time * child.userData.speed) * child.userData.radius;
+                    child.position.y = 5 + Math.sin(time + index) * 0.5;
+                    child.rotation.x += 0.01;
+                    child.rotation.y += 0.02;
+                }
+            });
+            
+            // Camera movement
+            camera.position.x += (mouseX * 5 - camera.position.x) * 0.05;
+            camera.position.y += (mouseY * 3 - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            
+            // Particle rotation
+            particlesMesh.rotation.y += 0.001;
+            
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
